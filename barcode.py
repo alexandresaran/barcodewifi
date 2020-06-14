@@ -4,8 +4,7 @@ import requests
 import json
 
 def barcode_reader():
-    """Barcode code obtained from 'brechmos' 
-    https://www.raspberrypi.org/forums/viewtopic.php?f=45&t=55100"""
+    #Mapeando codigo de barras
     hid = {4: 'a', 5: 'b', 6: 'c', 7: 'd', 8: 'e', 9: 'f', 10: 'g', 11: 'h', 12: 'i', 13: 'j', 14: 'k', 15: 'l', 16: 'm',
            17: 'n', 18: 'o', 19: 'p', 20: 'q', 21: 'r', 22: 's', 23: 't', 24: 'u', 25: 'v', 26: 'w', 27: 'x', 28: 'y',
            29: 'z', 30: '1', 31: '2', 32: '3', 33: '4', 34: '5', 35: '6', 36: '7', 37: '8', 38: '9', 39: '0', 44: ' ',
@@ -25,54 +24,49 @@ def barcode_reader():
 
     while not done:
 
-        ## Get the character from the HID
+        ## Lê string capturada pelo barcode via USB
         buffer = fp.read(8)
         for c in buffer:
             if ord(c) > 0:
 
-                ##  40 is carriage return which signifies
-                ##  we are done looking for characters
+                ##  40 e o caracter que indica que chegou ao fim da string
                 if int(ord(c)) == 40:
                     done = True
                     break;
 
-                ##  If we are shifted then we have to
-                ##  use the hid2 characters.
+                ##  Verifica se o codigo lido pelo USB esta em maiusculo, caso esteja, usar o hid2
                 if shift:
 
-                    ## If it is a '2' then it is the shift key
+                    ## Se o caracter for o numero 2, significa que eh um caracter maiusculo
                     if int(ord(c)) == 2:
                         shift = True
 
-                    ## if not a 2 then lookup the mapping
+                    ## Se for diferente de 2, avancar para o proximo caracter lido
                     else:
                         ss += hid2[int(ord(c))]
                         shift = False
 
-                ##  If we are not shifted then use
-                ##  the hid characters
-
+                ##  Se nao tiver identificado que eh um caracter maiusculo, usar o hid 1 para caracteres minusculos
                 else:
 
-                    ## If it is a '2' then it is the shift key
+                    ## Se o caracter for o numero 2, significa que eh um caracter maiusculo
                     if int(ord(c)) == 2:
                         shift = True
 
-                    ## if not a 2 then lookup the mapping
+                    ## Se for diferente de 2, avancar para o proximo caracter lido
                     else:
                         ss += hid[int(ord(c))]
     return ss
 
 def api_post(upc):
-
+    ## Define endereco a ser enviado o Post
     url = "http://192.168.2.87:5000/barcode"
     
-##
+    ## Faz um posto com um JSON do codigo de barras lido
     response = requests.post(url, json={"barcode":upc})
 
     print("-----" * 5)
     print(upc)
-##    print(json.dumps(response.json(), indent=2))
     print("-----" * 5 + "\n")
 
 if __name__ == '__main__':
